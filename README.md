@@ -134,7 +134,7 @@ New rules are the easiest way to help: add an entry to `src/deslop/rules.py`, ad
 它把文本里常见的 AI 套话逐条标出来（英文 70 条、中文 36 条），给出分数（0–99）和所在行号，并把其中 26 条能安全替换的直接改掉。
 
 ```bash
-pipx install deslop
+pipx install git+https://github.com/i-am-cie/deslop
 deslop check 周报.md
 deslop fix 周报.md --write
 ```

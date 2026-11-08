@@ -7,7 +7,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -29,3 +29,4 @@ jobs:
         run: |
           deslop check tests/fixtures/human_en.md --no-color || exit 1
           deslop check tests/fixtures/slop_en.md --no-color && exit 1 || true
+

@@ -38,14 +38,12 @@ It is a **linter, not a ghostwriter**. It points at the phrase; deciding what th
 ## Install
 
 ```bash
-pipx install deslop          # recommended
+pipx install git+https://github.com/i-am-cie/deslop   # recommended
 # or
-pip install deslop
-# or, from source
 git clone https://github.com/i-am-cie/deslop && cd deslop && pip install -e .
 ```
 
-Python 3.9+. No dependencies.
+Python 3.9+. No dependencies. A PyPI release is pending; until then install from the repository.
 
 ## Use
 
@@ -93,7 +91,7 @@ Two structure signals are added on top: em-dash density above 4 per 1000 words, 
 ```yaml
 - name: No AI slop in the docs
   run: |
-    pipx install deslop
+    pipx install git+https://github.com/i-am-cie/deslop
     deslop check README.md docs/*.md --min-score 30
 ```
 
@@ -148,3 +146,4 @@ deslop fix 周报.md --write
 ## License
 
 MIT. See [LICENSE](LICENSE).
+

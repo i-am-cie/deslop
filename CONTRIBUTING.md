@@ -35,7 +35,7 @@ src/deslop/rules.py    rule packs, the only place patterns live
 src/deslop/engine.py   text preparation, matching, metrics, scoring
 src/deslop/fixer.py    safe rewrites
 src/deslop/cli.py      argument parsing and output
-tests/                 fixture based tests
+tests/                 fixture, engine/fixer unit and rule-pack consistency tests
 ```
 
 ## Pull requests

@@ -69,3 +69,32 @@ def test_missing_file_returns_error(capsys):
     code = main(["check", "does-not-exist.md", "--no-color"])
     assert code == 2
 
+
+def test_rules_plain_text_lists_count(capsys):
+    code = main(["rules", "--lang", "zh"])
+    out = capsys.readouterr().out
+    assert code == 0
+    assert out.strip().splitlines()[-1] == "36 rules"
+
+
+def test_fix_diff_contains_unified_diff(tmp_path, capsys):
+    target = tmp_path / "note.md"
+    target.write_text("In order to test, prior to shipping, we do it.\n", encoding="utf-8")
+    code = main(["fix", str(target), "--diff", "--no-color"])
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "@@" in out
+    assert "---" in out and "+++" in out
+
+
+def test_check_top_truncates_findings(capsys):
+    main(["check", str(FIXTURES / "slop_en.md"), "--top", "1", "--no-color"])
+    out = capsys.readouterr().out
+    assert "more (raise --top" in out
+
+
+def test_json_output_includes_metrics_fields(capsys):
+    main(["check", str(FIXTURES / "slop_en.md"), "--json"])
+    payload = json.loads(capsys.readouterr().out)
+    metrics = payload[0]["metrics"]
+    assert {"words", "cjk_chars", "sentences", "em_density", "sentence_cv", "variation"} <= set(metrics)

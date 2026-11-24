@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from .engine import prepare, scan_text
+from .engine import CODE_FENCE_RE, INLINE_CODE_RE, prepare, scan_text
 from .rules import FIXABLE
 
 
@@ -28,6 +28,32 @@ def _preserve_case(original: str, replacement: str) -> str:
     if original[:1].isupper():
         return replacement[:1].upper() + replacement[1:]
     return replacement
+
+
+def _tidy_prose(text: str) -> str:
+    """Collapse whitespace left behind by rewrites, outside code blocks.
+
+    Code fences and inline code are stashed first so their indentation and
+    layout are preserved; the cleanup only touches the surrounding prose.
+    """
+    stash: list[str] = []
+
+    def _keep(match: re.Match[str]) -> str:
+        stash.append(match.group(0))
+        return f"\x00{len(stash) - 1}\x00"
+
+    protected = CODE_FENCE_RE.sub(_keep, text)
+    protected = INLINE_CODE_RE.sub(_keep, protected)
+
+    protected = re.sub(r"[ \t]{2,}", " ", protected)
+    protected = re.sub(r" +([,.;:!?])", r"\1", protected)
+    # a deleted opener can leave a leading space at the start of a line
+    protected = re.sub(r"(?m)^[ \t]+", "", protected)
+    protected = re.sub(r"\n{3,}", "\n\n", protected)
+
+    for index, block in enumerate(stash):
+        protected = protected.replace(f"\x00{index}\x00", block)
+    return protected
 
 
 def apply_fixes(text: str) -> tuple[str, list[Fix]]:
@@ -49,13 +75,9 @@ def apply_fixes(text: str) -> tuple[str, list[Fix]]:
             fixes.append(Fix(line=line, rule_id=rule.id, before=original, after=replacement))
             result = result[:start] + replacement + result[end:]
 
-    # tidy the mess a deletion can leave behind
-    result = re.sub(r"[ \t]{2,}", " ", result)
-    result = re.sub(r" +([,.;:!?])", r"\1", result)
-    result = re.sub(r"\n{3,}", "\n\n", result)
+    result = _tidy_prose(result)
     return result, fixes
 
 
 def count_fixable(text: str) -> int:
     return len(scan_text(text).fixable)
-

@@ -84,3 +84,52 @@ def test_human_text_has_no_fixable_findings():
     assert fixes == []
 
 
+def test_empty_and_whitespace_text_do_not_crash():
+    for blank in ("", "   \n  ", "\n\t\n"):
+        result = scan_text(blank)
+        assert result.findings == []
+        assert result.score == 0
+        assert 0 <= result.score <= 99
+
+
+def test_score_stays_within_bounds():
+    for name in ("slop_en.md", "slop_zh.md", "human_en.md", "human_zh.md"):
+        result = scan_text(read(name))
+        assert 0 <= result.score <= 99
+
+
+def test_chinese_text_only_runs_chinese_rules():
+    result = scan_text("随着互联网的不断发展，我们的生活发生了变化。")
+    assert result.findings
+    assert all(f.rule.lang == "zh" for f in result.findings)
+
+
+def test_english_text_only_runs_english_rules():
+    result = scan_text("We delve into the fast-paced world of synergy.")
+    assert result.findings
+    assert all(f.rule.lang == "en" for f in result.findings)
+
+
+def test_findings_report_line_and_column():
+    result = scan_text("First plain line.\nWe delve into the tapestry here.\nThird line.\n")
+    by_id = {f.rule.id: f for f in result.findings}
+    assert by_id["en.delve"].line == 2
+    assert by_id["en.delve"].column == 4
+    assert by_id["en.tapestry"].line == 2
+
+
+def test_front_matter_is_not_scanned():
+    text = "---\ntitle: delve into the tapestry\n---\nA plain sentence about code.\n"
+    assert scan_text(text).findings == []
+
+
+def test_horizontal_rule_is_not_scanned():
+    result = scan_text("Intro line.\n\n---\n\nSeamless follow up.\n")
+    assert all(f.match.strip() != "---" for f in result.findings)
+    assert any(f.rule.id == "en.seamless" for f in result.findings)
+
+
+def test_empty_metrics_variation_is_na():
+    metrics = compute_metrics("")
+    assert metrics.sentence_cv is None
+    assert metrics.variation_label == "n/a"
